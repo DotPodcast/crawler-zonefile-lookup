@@ -1,0 +1,11 @@
+{
+  "blockstack": {
+    "corePaths": ["http://localhost:6264/RPC2", "http://localhost:6265/RPC2"]
+  },
+  "rabbit": {
+    "host": "localhost",
+    "inQueue": "name_queue",
+    "outQueue": "zonefile_queue",
+    "persistQueue": "persist_queue"
+  }
+}
