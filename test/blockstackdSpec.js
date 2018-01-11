@@ -33,4 +33,46 @@ describe('The blockstackd proxy', function () {
       expect(zonefile.$ttl).to.equal(3600);
     });
   });
+
+  it('should properly identify a zonefile that contains subdomains', () => {
+    const regZonefile = {
+      '$origin': 'foo.id',
+      '$ttl': 3600,
+      uri: [
+        {
+          name: '_http._tcp',
+          target: 'http://mysub/foo.id',
+          priority: 10,
+          weight: 1
+        }
+      ]
+    };
+
+    const subZonefile = {
+      '$origin': 'bar.id',
+      '$ttl': 3600,
+      txt: [
+        {
+          name: 'pubkey',
+          txt: 'pubkey:data:0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+        },
+        {
+          name: 'aaron',
+          txt: 'zf0=JE9SSUdJTiBhYXJvbgokVFRMIDM2MDAKbWFpbiBVUkkgMSAxICJwdWJrZXk6ZGF0YTowMzAyYWRlNTdlNjNiMzc1NDRmOGQ5Nzk4NjJhNDlkMDBkYmNlMDdmMjkzYmJlYjJhZWNmZTI5OTkxYTg3Mzk4YjgiCg=='
+        }
+      ],
+      uri: [
+        {
+          name: 'registrar',
+          target: 'bsreg://foo.com:8234',
+          priority: 10,
+          weight: 1
+        }
+      ]
+    };
+
+    expect(blockstackd.isSubdomain(regZonefile)).to.be.false;
+    expect(blockstackd.isSubdomain(subZonefile)).to.be.true;
+
+  });
 });

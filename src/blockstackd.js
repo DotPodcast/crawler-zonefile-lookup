@@ -75,8 +75,10 @@ const getZonefile = async (name) => {
 };
 
 const isSubdomain = (zonefile) => {
-  // TODO make this legit
-  return zonefile && false;
+  if (zonefile.txt && zonefile.txt.filter((record) => record.txt.indexOf('zf0=') === 0).length > 0 ) {
+    return true;
+  }
+  return false;
 };
 
 export default {
