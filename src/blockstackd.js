@@ -11,6 +11,7 @@ export const errors = {
   NO_ZONEFILE_HASH: { error: 'No Zonefile Hash' },
   NO_ZONEFILE: { error: 'No Zonefile' },
   MALFORMED_ZONEFILE: { error: 'Zonefile is malformed.' },
+  NO_USER_RECORDS: { error: 'Cannot find user records.' },
 };
 
 const CORE_PATHS = Circular.from(config.get('blockstack:corePaths'));
@@ -54,6 +55,10 @@ const getZonefile = async (name) => {
     return Promise.resolve(errors.NO_INFO);
   }
   const nameInfo = await getNameAt(name, info.last_block_processed);
+
+  if (!nameInfo.records) {
+    return Promise.resolve(errors.NO_USER_RECORDS);
+  }
   const hash = nameInfo.records[0].value_hash;
 
   if (!hash) {
@@ -61,7 +66,7 @@ const getZonefile = async (name) => {
   }
   const encZonefile = await getZonefileFromHash(hash);
 
-  if (!encZonefile.zonefiles[hash]) {
+  if (!encZonefile.zonefiles || !encZonefile.zonefiles[hash]) {
     return Promise.resolve(errors.NO_ZONEFILE);
   }
   const txtZonefile = decode(encZonefile.zonefiles[hash]);

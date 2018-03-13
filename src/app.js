@@ -23,7 +23,7 @@ const exit = (cb) => {
 
 const inQ = config.get('rabbit:inQueue');
 const outQ = config.get('rabbit:outQueue');
-const subdomainQ = config.get('rabbit:submdomainQueue');
+const subdomainQ = config.get('rabbit:subdomainQueue');
 const persistQ = config.get('rabbit:persistQueue');
 
 // Connect to RabbitMQ
@@ -33,7 +33,7 @@ open.then((conn) => {
   conn.createChannel()
     .then((ch) => {
       ch.prefetch(1);
-      ch.assertQueue(inQ, { durable: true });
+      ch.assertQueue(inQ, { durable: true, maxLength: 40000});
       winston.log('info', 'Input Queue is Present');
 
       ch.assertQueue(outQ, { durable: true });
@@ -53,7 +53,21 @@ open.then((conn) => {
             channel.sendToQueue(subdomainQ, Buffer.from(JSON.stringify(zonefile)), { persistent: true });
           } else {
             winston.info(`Found zonefile for ${zonefile.$origin}`);
-            channel.sendToQueue(outQ, Buffer.from(JSON.stringify(zonefile)), { persistent: true });
+            if (zonefile.uri) {
+              const httpUri = zonefile.uri.filter((uri) => uri.name === '_http._tcp');
+              if (!httpUri.length) {
+                winston.info(`No http uri found for ${zonefile.$origin}`);
+              } else {
+                // Send to the crawl queue
+                channel.sendToQueue(outQ, Buffer.from(JSON.stringify({
+                  uri: httpUri[0].target,
+                  mergeData: {
+                    docId: zonefile.$origin,
+                  },
+                })), { persistent: true });
+              }
+            }
+            // Persist the zonefile as is
             channel.sendToQueue(persistQ, Buffer.from(JSON.stringify({
               index: 'zonefiles',
               type: 'zonefile',
