@@ -1,0 +1,6 @@
+version: '2'
+services:
+  zonefile-lookup:
+    build: .
+    environment:
+      - NODE_ENV=production
